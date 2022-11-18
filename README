@@ -1,0 +1,4 @@
+bash create_root.sh
+bash create_intermediate.sh intermediate
+bash create_server.sh intermediate hdp300.sre.iti.acceldata.dev
+./export.sh -i intermediate -c hdp300.sre.iti.acceldata.dev -d /home -k
