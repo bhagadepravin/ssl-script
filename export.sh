@@ -1,40 +1,80 @@
 #!/bin/bash
+# usage: ./export.sh <intermediate> <certificate-name> <dest-folder>
 
-if [ "$EUID" -ne 0 ]; then 
-  echo "Please run as root"
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root: sudo ./export.sh"
   exit
 fi
 
-INTERMEDIATE_DIR="/root/ca/intermediate"
-ROOT_CA_CERT="/root/ca/certs/ca.cert.pem"  # Update this path if needed
-SERVER_NAME=$1
-EXPORT_DIR=$2
+showHelp() {
+# `cat << EOF` This means that cat should stop reading when EOF is detected
+cat << EOF
+Usage: ./export.sh -i <intermediate-name> -c <certificate-name> -d <dest-folder> [-k] [-h]
+  -h  Display help
+  -i  name of the intermediate
+      (it's the /root/ca/<intermediate-name>)
+  -c  name of the certificate ("intermediate" or client/server name)
+      (it's /root/ca/<intermediate-name>/certs/<CERT_NAME>.cert.pem and /root/ca/<intermediate-name>/private/<CERT_NAME>.cert.pem)
+  -d  destination folder
+  -k  exports the private key
+Examples:
+  to extract the intermediate "intermediate" (including private key) into ~/exported:
+    ./export.sh -i intermediate -c intermediate -d ~/exported -k
+  to extract the server "c474-node1.coelab.cloudera.com" (including private key) into ~/exported:
+    ./export.sh -i intermediate -c c474-node1.coelab.cloudera.com -d ~/exported -k
+EOF
+# EOF is found above and hence cat command stops reading. This is equivalent to echo but much neater when printing out.
+}
 
-# Ensure export directory exists
-mkdir -p $EXPORT_DIR
+while getopts "hki:c:d:" args; do
+    case "${args}" in
+        h ) showHelp;;
+        i ) INTERMEDIATE_DIR="${OPTARG}";;
+        c ) CERT_NAME="${OPTARG}";;
+        d ) DEST_DIR="${OPTARG}";;
+        k ) PK=1;;
+        \? ) echo "Unknown option: -$OPTARG" >&2; exit 1;;
+        :  ) echo "Missing option argument for -$OPTARG" >&2; exit 1;;
+        *  ) echo "Unimplemented option: -$OPTARG" >&2; exit 1;;
+    esac
+done
+shift $((OPTIND-1))
 
-# Copy server certificate
-cp $INTERMEDIATE_DIR/$SERVER_NAME/certs/$SERVER_NAME.cert.pem $EXPORT_DIR/$SERVER_NAME.cert.pem
+if [ ! "$INTERMEDIATE_DIR" ] || [ ! "$CERT_NAME" ] || [ ! "$DEST_DIR" ];
+then
+    showHelp
+    exit 1
+fi
 
-# Copy server private key
-cp $INTERMEDIATE_DIR/$SERVER_NAME/private/$SERVER_NAME.key.pem $EXPORT_DIR/$SERVER_NAME.key.pem
+export CA_ROOT="/root/ca"
 
-# Copy intermediate certificate
-cp $INTERMEDIATE_DIR/certs/intermediate.cert.pem $EXPORT_DIR/intermediate.cert.pem
+# create dest folder if it does not exist
+echo
+echo "creating ${DEST_DIR} (if it does not exist already)..."
+sudo mkdir -p ${DEST_DIR}
 
-# Copy root CA certificate
-cp $ROOT_CA_CERT $EXPORT_DIR/ca.cert.pem
+source=${CA_ROOT}/${INTERMEDIATE_DIR}/certs/ca-chain.cert.pem
+dest=${DEST_DIR}/${INTERMEDIATE_DIR}-ca-chain.cert.pem
+echo
+echo "exporting root+intermediate chain..."
+echo "${source} --> ${dest}"
+sudo cp $source $dest
 
-# Create full chain file
-cat $EXPORT_DIR/$SERVER_NAME.cert.pem \
-    $EXPORT_DIR/intermediate.cert.pem \
-    $EXPORT_DIR/ca.cert.pem > $EXPORT_DIR/$SERVER_NAME.fullchain.cert.pem
+source=${CA_ROOT}/${INTERMEDIATE_DIR}/${CERT_NAME}/certs/${CERT_NAME}.cert.pem
+dest=${DEST_DIR}/${INTERMEDIATE_DIR}-${CERT_NAME}.cert.pem
+echo
+echo "exporting certificate..."
+echo "${source} --> ${dest}"
+sudo cp $source $dest
 
-# Verify permissions
-chmod 444 $EXPORT_DIR/$SERVER_NAME.cert.pem
-chmod 400 $EXPORT_DIR/$SERVER_NAME.key.pem
-chmod 444 $EXPORT_DIR/intermediate.cert.pem
-chmod 444 $EXPORT_DIR/ca.cert.pem
-chmod 444 $EXPORT_DIR/$SERVER_NAME.fullchain.cert.pem
+if [ "$PK" ];
+then
+    source=${CA_ROOT}/${INTERMEDIATE_DIR}/${CERT_NAME}/private/${CERT_NAME}.key.pem
+    dest=${DEST_DIR}/${INTERMEDIATE_DIR}-${CERT_NAME}.key.pem
+    echo
+    echo "exporting private key..."
+    echo "${source} --> ${dest}"
+    sudo cp $source $dest
+fi
 
-echo "Certificates and key have been exported to $EXPORT_DIR"
+exit 0
