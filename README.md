@@ -6,5 +6,5 @@ cd ssl-script
 bash create_root.sh
 bash create_intermediate.sh intermediate
 bash create_server.sh `hostname -f`
-./export.sh -i intermediate -c `hostname -f` -d /home
+./export.sh -i intermediate -c `hostname -f` -d /home -k
 ```
