@@ -114,7 +114,7 @@ authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth, clientAuth
 #subjectAltName=DNS:hostname
-subjectAltName=DNS:*.acceldata.dev, DNS:.centos7.adsre, DNS:hdp100.sre.iti.acceldata.dev, DNS:hdp200.sre.iti.acceldata.dev, DNS:hdp300.sre.iti.acceldata.dev, DNS:hdp400.sre.iti.acceldata.dev
+subjectAltName=DNS:*.acceldata.dev, DNS:.centos7.adsre, DNS:*..adsre.com
 
 [ crl_ext ]
 # Extension for CRLs (`man x509v3_config`).
