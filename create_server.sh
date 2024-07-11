@@ -1,46 +1,46 @@
 #!/bin/bash
-# usage: bash create_intermediate.sh intermediate `hostname -f` 
 
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root"
+if [ "$EUID" -ne 0 ]; then 
+  echo "Please run as root"
   exit
 fi
 
-INTERMEDIATE_DIR=$1
-export DEST_DIR=/root/ca/$1
+INTERMEDIATE_DIR="/root/ca/intermediate"
+ROOT_CA_CERT="/root/ca/certs/ca.cert.pem"  # Update this path if needed
+SERVER_NAME=$1
+SERVER_DIR="$INTERMEDIATE_DIR/$SERVER_NAME"
 
-SERVER_CERT_NAME=$2
+# Ensure directories exist
+mkdir -p $SERVER_DIR/private
+mkdir -p $SERVER_DIR/certs
+mkdir -p $SERVER_DIR/csr
 
-# create key
-cd /root/ca
-      # -aes256
-openssl genrsa -out $INTERMEDIATE_DIR/private/$SERVER_CERT_NAME.key.pem 2048
-chmod 400 $INTERMEDIATE_DIR/private/$SERVER_CERT_NAME.key.pem
+# Create key
+openssl genrsa -out $SERVER_DIR/private/$SERVER_NAME.key.pem 2048
+chmod 400 $SERVER_DIR/private/$SERVER_NAME.key.pem
 
-# create CSR
-cd /root/ca
+# Create CSR
 openssl req -config $INTERMEDIATE_DIR/openssl.cnf \
-      -key $INTERMEDIATE_DIR/private/$SERVER_CERT_NAME.key.pem \
-      -new -sha256 -out $INTERMEDIATE_DIR/csr/$SERVER_CERT_NAME.csr.pem
+      -key $SERVER_DIR/private/$SERVER_NAME.key.pem \
+      -new -sha256 -out $SERVER_DIR/csr/$SERVER_NAME.csr.pem
 
-# sign certificate
-cd /root/ca
+# Sign certificate
 openssl ca -config $INTERMEDIATE_DIR/openssl.cnf \
       -extensions server_cert -days 375 -notext -md sha256 \
-      -in $INTERMEDIATE_DIR/csr/$SERVER_CERT_NAME.csr.pem \
-      -out $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.cert.pem
-chmod 444 $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.cert.pem
+      -in $SERVER_DIR/csr/$SERVER_NAME.csr.pem \
+      -out $SERVER_DIR/certs/$SERVER_NAME.cert.pem
+chmod 444 $SERVER_DIR/certs/$SERVER_NAME.cert.pem
 
-# view certificate
+# View certificate
 openssl x509 -noout -text \
-      -in $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.cert.pem
+      -in $SERVER_DIR/certs/$SERVER_NAME.cert.pem
 
-# verify certificate
+# Verify certificate
 openssl verify -CAfile $INTERMEDIATE_DIR/certs/ca-chain.cert.pem \
-      $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.cert.pem
+      $SERVER_DIR/certs/$SERVER_NAME.cert.pem
 
-# create chain file
-cd /root/ca
-cat $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.cert.pem \
-      $INTERMEDIATE_DIR/certs/ca-chain.cert.pem > $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.fullchain.cert.pem
-chmod 444 $INTERMEDIATE_DIR/certs/$SERVER_CERT_NAME.fullchain.cert.pem
+# Create chain file
+cat $SERVER_DIR/certs/$SERVER_NAME.cert.pem \
+      $INTERMEDIATE_DIR/certs/intermediate.cert.pem \
+      $ROOT_CA_CERT > $SERVER_DIR/certs/$SERVER_NAME.fullchain.cert.pem
+chmod 444 $SERVER_DIR/certs/$SERVER_NAME.fullchain.cert.pem
