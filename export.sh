@@ -20,8 +20,8 @@ Usage: ./export.sh -i <intermediate-name> -c <certificate-name> -d <dest-folder>
 Examples:
   to extract the intermediate "intermediate" (including private key) into ~/exported:
     ./export.sh -i intermediate -c intermediate -d ~/exported -k
-  to extract the server "c474-node1.coelab.cloudera.com" (including private key) into ~/exported:
-    ./export.sh -i intermediate -c c474-node1.coelab.cloudera.com -d ~/exported -k
+  to extract the server "jumpbox-sre-backup.dc.rocky.adsre.com" (including private key) into ~/exported:
+    ./export.sh -i intermediate -c jumpbox-sre-backup.dc.rocky.adsre.com -d ~/exported -k
 EOF
 # EOF is found above and hence cat command stops reading. This is equivalent to echo but much neater when printing out.
 }
