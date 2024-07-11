@@ -14,10 +14,10 @@ EXPORT_DIR=$2
 mkdir -p $EXPORT_DIR
 
 # Copy server certificate
-cp $INTERMEDIATE_DIR/certs/$SERVER_NAME.cert.pem $EXPORT_DIR/$SERVER_NAME.cert.pem
+cp $INTERMEDIATE_DIR/$SERVER_NAME/certs/$SERVER_NAME.cert.pem $EXPORT_DIR/$SERVER_NAME.cert.pem
 
 # Copy server private key
-cp $INTERMEDIATE_DIR/private/$SERVER_NAME.key.pem $EXPORT_DIR/$SERVER_NAME.key.pem
+cp $INTERMEDIATE_DIR/$SERVER_NAME/private/$SERVER_NAME.key.pem $EXPORT_DIR/$SERVER_NAME.key.pem
 
 # Copy intermediate certificate
 cp $INTERMEDIATE_DIR/certs/intermediate.cert.pem $EXPORT_DIR/intermediate.cert.pem
