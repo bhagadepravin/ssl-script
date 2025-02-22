@@ -10,7 +10,7 @@ bash create_server.sh `hostname -f`
 ./export.sh -i intermediate -c `hostname -f` -d /home -k
 ```
 
-### Update SAN Entries
+### Update SAN Entries in intermediate.openssl.cnf
 ```
 By default we have 
 subjectAltName=DNS:*.acceldata.dev, DNS:.centos7.adsre, DNS:*.adsre.com
